@@ -48,6 +48,8 @@ struct MarketplaceEntry {
     installed: bool,
     source_id: Option<String>,
     state: Option<PluginState>,
+    active_revision: Option<String>,
+    runtime: Option<String>,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Deserialize)]
@@ -139,6 +141,12 @@ fn MarketplaceCard(
             }
             p { "{entry.summary}" }
             p { class: "text-sm text-muted-foreground", "{entry.git}" }
+            if let Some(revision) = entry.active_revision.as_ref() {
+                p { class: "text-sm text-muted-foreground", "活动版本：{short_revision(revision)}" }
+            }
+            if let Some(runtime) = entry.runtime.as_ref() {
+                p { class: "text-sm text-muted-foreground", "运行目标：{runtime}" }
+            }
             div { class: "flex flex-wrap gap-2",
                 if !entry.installed {
                     Button {
@@ -191,6 +199,10 @@ fn MarketplaceCard(
             }
         }
     }
+}
+
+fn short_revision(revision: &str) -> &str {
+    revision.get(..12).unwrap_or(revision)
 }
 
 async fn load_marketplace() -> Result<Vec<MarketplaceEntry>, String> {
