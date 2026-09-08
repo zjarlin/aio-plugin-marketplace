@@ -54,6 +54,13 @@ struct MarketplaceEntry {
     runtime: Option<String>,
 }
 
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize)]
+struct LifecycleEvent {
+    lifecycle: String,
+    detail: String,
+    created_at: String,
+}
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Deserialize)]
 #[serde(rename_all = "snake_case")]
 enum PluginState {
@@ -200,7 +207,8 @@ fn MarketplaceCard(
     let source_id = entry.source_id.clone().unwrap_or_default();
     let disable_source = source_id.clone();
     let enable_source = source_id.clone();
-    let rollback_source = source_id;
+    let rollback_source = source_id.clone();
+    let event_source = source_id;
     rsx! {
         article { class: "border p-4",
             div { class: "flex items-center justify-between gap-2",
@@ -265,6 +273,34 @@ fn MarketplaceCard(
                     }
                 }
             }
+            if entry.installed {
+                LifecycleEvents { source_id: event_source }
+            }
+        }
+    }
+}
+
+#[component]
+fn LifecycleEvents(source_id: String) -> Element {
+    let events = use_resource(move || load_lifecycle_events(source_id.clone()));
+    let Some(result) = events.read().as_ref().cloned() else {
+        return rsx! { p { class: "text-sm text-muted-foreground", "正在读取生命周期事件" } };
+    };
+    let events = match result {
+        Ok(events) => events,
+        Err(error) => return rsx! { p { role: "alert", "读取生命周期事件失败: {error}" } },
+    };
+    if events.is_empty() {
+        return rsx! {};
+    }
+    rsx! {
+        div { class: "mt-3 grid gap-1",
+            p { class: "text-sm font-medium", "生命周期" }
+            for event in events {
+                p { class: "text-sm text-muted-foreground",
+                    "{event.lifecycle}: {event.detail} ({event.created_at})"
+                }
+            }
         }
     }
 }
@@ -275,6 +311,10 @@ fn short_revision(revision: &str) -> &str {
 
 async fn load_marketplace() -> Result<Vec<MarketplaceEntry>, String> {
     get::<Vec<MarketplaceEntry>>("/api/runtime/marketplace").await
+}
+
+async fn load_lifecycle_events(source_id: String) -> Result<Vec<LifecycleEvent>, String> {
+    get::<Vec<LifecycleEvent>>(&format!("/api/runtime/plugins/{source_id}/events")).await
 }
 
 async fn install(entry: &MarketplaceEntry, mut status: Signal<Option<String>>) {
