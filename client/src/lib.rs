@@ -3,6 +3,7 @@ use az_ui_components::{
     badge::{Badge, BadgeVariant},
     button::{Button, ButtonVariant},
     dialog::{Dialog, DialogDescription, DialogTitle},
+    input::Input,
 };
 use dill::CatalogBuilder;
 use dioxus::prelude::*;
@@ -72,6 +73,9 @@ fn MarketplacePage() -> Element {
     let entries = use_resource(load_marketplace);
     let status = use_signal(|| None::<String>);
     let mut uninstalling = use_signal(|| None::<MarketplaceEntry>);
+    let mut installing_git = use_signal(|| false);
+    let mut git = use_signal(String::new);
+    let mut revision = use_signal(String::new);
     let Some(result) = entries.read().as_ref().cloned() else {
         return rsx! { p { "正在读取插件市场" } };
     };
@@ -81,7 +85,15 @@ fn MarketplacePage() -> Element {
     };
     rsx! {
         section {
-            h2 { "插件市场" }
+            div { class: "flex items-center justify-between gap-2",
+                h2 { "插件市场" }
+                Button {
+                    r#type: "button",
+                    variant: ButtonVariant::Outline,
+                    onclick: move |_| installing_git.set(true),
+                    "从 Git 安装"
+                }
+            }
             p { "从 Git 仓库发现、安装和回滚当前租户的插件。" }
             if let Some(message) = status() {
                 p { role: "status", "{message}" }
@@ -89,6 +101,47 @@ fn MarketplacePage() -> Element {
             div { class: "grid gap-3 md:grid-cols-2",
                 for entry in entries {
                     MarketplaceCard { entry, status, uninstalling }
+                }
+            }
+        }
+        if installing_git() {
+            Dialog {
+                open: true,
+                on_open_change: move |open: bool| if !open { installing_git.set(false) },
+                DialogTitle { "安装 Git 插件" }
+                DialogDescription { "宿主会解析 revision 并把实际安装版本锁定为完整提交 SHA。" }
+                form {
+                    onsubmit: move |event| {
+                        event.prevent_default();
+                        let source = git().trim().to_owned();
+                        let target = revision().trim().to_owned();
+                        spawn(async move { install_source(source, target, status).await });
+                    },
+                    label { r#for: "plugin-git", "Git 仓库" }
+                    Input {
+                        id: "plugin-git",
+                        aria_label: "Git 仓库",
+                        placeholder: "https://github.com/example/aio-plugin.git",
+                        value: git(),
+                        oninput: move |event: FormEvent| git.set(event.value()),
+                    }
+                    label { r#for: "plugin-revision", "Revision" }
+                    Input {
+                        id: "plugin-revision",
+                        aria_label: "Revision",
+                        placeholder: "提交 SHA、标签或分支",
+                        value: revision(),
+                        oninput: move |event: FormEvent| revision.set(event.value()),
+                    }
+                    div { class: "flex justify-end gap-2",
+                        Button {
+                            r#type: "button",
+                            variant: ButtonVariant::Ghost,
+                            onclick: move |_| installing_git.set(false),
+                            "取消"
+                        }
+                        Button { r#type: "submit", "安装" }
+                    }
                 }
             }
         }
@@ -120,6 +173,20 @@ fn MarketplacePage() -> Element {
             }
         }
     }
+}
+
+async fn install_source(git: String, revision: String, mut status: Signal<Option<String>>) {
+    if git.is_empty() {
+        status.set(Some("操作失败: Git 仓库不能为空".to_owned()));
+        return;
+    }
+    status.set(Some(format!("正在安装 {git}")));
+    let request = InstallRequest {
+        git: &git,
+        rev: (!revision.is_empty()).then_some(revision.as_str()),
+    };
+    let result = request_install(&request).await;
+    finish(result, status);
 }
 
 #[component]
@@ -216,19 +283,20 @@ async fn install(entry: &MarketplaceEntry, mut status: Signal<Option<String>>) {
         git: &entry.git,
         rev: Some(&entry.rev),
     };
-    let result = async {
-        let builder = gloo_net::http::Request::post("/api/runtime/plugins/install")
-            .json(&request)
-            .map_err(|error| error.to_string())?;
-        let response = builder.send().await.map_err(|error| error.to_string())?;
-        if response.ok() {
-            Ok(())
-        } else {
-            Err(response.text().await.unwrap_or_default())
-        }
-    }
-    .await;
+    let result = request_install(&request).await;
     finish(result, status);
+}
+
+async fn request_install(request: &InstallRequest<'_>) -> Result<(), String> {
+    let builder = gloo_net::http::Request::post("/api/runtime/plugins/install")
+        .json(request)
+        .map_err(|error| error.to_string())?;
+    let response = builder.send().await.map_err(|error| error.to_string())?;
+    if response.ok() {
+        Ok(())
+    } else {
+        Err(response.text().await.unwrap_or_default())
+    }
 }
 
 async fn perform(path: &str, mut status: Signal<Option<String>>) {
