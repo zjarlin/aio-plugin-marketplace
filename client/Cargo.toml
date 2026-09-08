@@ -5,8 +5,8 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
-az-dioxus-admin-shell = { git = "https://github.com/zjarlin/dioxus-admin-workbench.git", rev = "11c0d3856e541e3421854a2a96e995ba02546c3a" }
-az-ui-components = { git = "https://github.com/zjarlin/dioxus-admin-workbench.git", rev = "11c0d3856e541e3421854a2a96e995ba02546c3a" }
+az-dioxus-admin-shell = { git = "https://github.com/zjarlin/dioxus-admin-workbench.git", rev = "224dd2132720ae0d681a28d473c2aaccbd76b21b" }
+az-ui-components = { git = "https://github.com/zjarlin/dioxus-admin-workbench.git", rev = "224dd2132720ae0d681a28d473c2aaccbd76b21b" }
 dill = "0.15.0"
 dioxus = { version = "=0.7.9", default-features = false, features = ["macro", "html", "signals"] }
 gloo-net = { version = "0.6.0", features = ["http", "json"] }

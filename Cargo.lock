@@ -117,7 +117,7 @@ dependencies = [
 [[package]]
 name = "az-admin-shell-core"
 version = "2026.8.13"
-source = "git+https://github.com/zjarlin/dioxus-admin-workbench.git?rev=11c0d3856e541e3421854a2a96e995ba02546c3a#11c0d3856e541e3421854a2a96e995ba02546c3a"
+source = "git+https://github.com/zjarlin/dioxus-admin-workbench.git?rev=224dd2132720ae0d681a28d473c2aaccbd76b21b#224dd2132720ae0d681a28d473c2aaccbd76b21b"
 dependencies = [
  "anyhow",
  "convert_case",
@@ -132,7 +132,7 @@ dependencies = [
 [[package]]
 name = "az-dioxus-admin-shell"
 version = "2026.8.17"
-source = "git+https://github.com/zjarlin/dioxus-admin-workbench.git?rev=11c0d3856e541e3421854a2a96e995ba02546c3a#11c0d3856e541e3421854a2a96e995ba02546c3a"
+source = "git+https://github.com/zjarlin/dioxus-admin-workbench.git?rev=224dd2132720ae0d681a28d473c2aaccbd76b21b#224dd2132720ae0d681a28d473c2aaccbd76b21b"
 dependencies = [
  "anyhow",
  "az-admin-shell-core",
@@ -149,7 +149,7 @@ dependencies = [
 [[package]]
 name = "az-ui-components"
 version = "2026.8.17"
-source = "git+https://github.com/zjarlin/dioxus-admin-workbench.git?rev=11c0d3856e541e3421854a2a96e995ba02546c3a#11c0d3856e541e3421854a2a96e995ba02546c3a"
+source = "git+https://github.com/zjarlin/dioxus-admin-workbench.git?rev=224dd2132720ae0d681a28d473c2aaccbd76b21b#224dd2132720ae0d681a28d473c2aaccbd76b21b"
 dependencies = [
  "dioxus",
  "dioxus-icons",
