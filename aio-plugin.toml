@@ -1,0 +1,6 @@
+[plugin.client]
+path = "."
+
+[plugin.server]
+path = "."
+
