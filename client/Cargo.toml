@@ -1,0 +1,14 @@
+[package]
+name = "aio-plugin-marketplace-client"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+az-dioxus-admin-shell = { git = "https://github.com/zjarlin/dioxus-admin-workbench.git", rev = "bc77f06cf705873e9aeb17bd260a5ec98184e84d" }
+az-ui-components = { git = "https://github.com/zjarlin/dioxus-admin-workbench.git", rev = "bc77f06cf705873e9aeb17bd260a5ec98184e84d" }
+dill = "0.15.0"
+dioxus = { version = "=0.7.9", default-features = false, features = ["macro", "html", "signals"] }
+
+[lints]
+workspace = true

@@ -1,6 +1,5 @@
 [plugin.client]
-path = "."
+path = "client"
 
 [plugin.server]
-path = "."
-
+path = "server"

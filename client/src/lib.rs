@@ -12,14 +12,19 @@ impl ApplicationPlugin for MarketplacePlugin {
             id: "marketplace",
             label: "插件市场",
             icon: Some("store"),
-            scene: ApplicationScene { id: "system", label: "系统" },
+            scene: ApplicationScene {
+                id: "system",
+                label: "系统",
+            },
             render: MarketplacePage,
         }]
     }
 }
 
 pub fn register(builder: &mut CatalogBuilder) {
-    builder.add_value(MarketplacePlugin).bind::<dyn ApplicationPlugin, MarketplacePlugin>();
+    builder
+        .add_value(MarketplacePlugin)
+        .bind::<dyn ApplicationPlugin, MarketplacePlugin>();
 }
 
 #[allow(non_snake_case)]
@@ -36,7 +41,9 @@ fn MarketplacePage() -> Element {
                     Button {
                         r#type: "button",
                         variant: ButtonVariant::Outline,
-                        onclick: move |_| status.set("安装请求已提交，正在等待运行时激活".to_owned()),
+                        onclick: move |_| {
+                            status.set("安装请求已提交，正在等待运行时激活".to_owned());
+                        },
                         "安装"
                     }
                 }
@@ -44,10 +51,4 @@ fn MarketplacePage() -> Element {
             p { role: "status", "{status}" }
         }
     }
-}
-
-#[cfg(feature = "server")]
-pub fn router(_catalog: &dill::Catalog) -> anyhow::Result<axum::Router> {
-    use axum::{Router, routing::get};
-    Ok(Router::new().route("/api/plugins/marketplace", get(|| async { "ok" })))
 }
