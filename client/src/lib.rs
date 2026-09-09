@@ -52,6 +52,18 @@ struct MarketplaceEntry {
     state: Option<PluginState>,
     active_revision: Option<String>,
     runtime: Option<String>,
+    #[serde(default)]
+    capabilities: MarketplaceCapabilities,
+}
+
+#[derive(Clone, Debug, Default, Eq, PartialEq, Deserialize)]
+struct MarketplaceCapabilities {
+    #[serde(default)]
+    network: Vec<String>,
+    #[serde(default)]
+    filesystem: Vec<String>,
+    #[serde(default)]
+    database: bool,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize)]
@@ -223,6 +235,7 @@ fn MarketplaceCard(
             if let Some(runtime) = entry.runtime.as_ref() {
                 p { class: "text-sm text-muted-foreground", "运行目标：{runtime}" }
             }
+            p { class: "text-sm text-muted-foreground", "能力：{capability_summary(&entry.capabilities)}" }
             div { class: "flex flex-wrap gap-2",
                 if !entry.installed {
                     Button {
@@ -277,6 +290,24 @@ fn MarketplaceCard(
                 LifecycleEvents { source_id: event_source }
             }
         }
+    }
+}
+
+fn capability_summary(capabilities: &MarketplaceCapabilities) -> String {
+    let mut values = Vec::new();
+    if capabilities.database {
+        values.push("数据库".to_owned());
+    }
+    if !capabilities.network.is_empty() {
+        values.push(format!("网络({})", capabilities.network.join(", ")));
+    }
+    if !capabilities.filesystem.is_empty() {
+        values.push(format!("文件({})", capabilities.filesystem.join(", ")));
+    }
+    if values.is_empty() {
+        "无额外能力".to_owned()
+    } else {
+        values.join("、")
     }
 }
 
