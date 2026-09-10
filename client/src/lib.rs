@@ -22,6 +22,7 @@ impl ApplicationPlugin for MarketplacePlugin {
                 id: "system",
                 label: "系统",
             },
+            menu_path: Vec::new(),
             required_permission: Some("plugin:manage"),
             render: MarketplacePage,
         }]
