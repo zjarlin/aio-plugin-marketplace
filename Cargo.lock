@@ -19,9 +19,10 @@ dependencies = [
  "az-ui-components",
  "dill",
  "dioxus",
+ "dioxus-icons",
  "gloo-net",
  "serde",
- "web-sys",
+ "serde_json",
 ]
 
 [[package]]
@@ -117,7 +118,7 @@ dependencies = [
 [[package]]
 name = "az-admin-shell-core"
 version = "2026.8.13"
-source = "git+https://github.com/zjarlin/dioxus-admin-workbench.git?rev=819ae159ab7dcba65d33d056d528ae8f7ec32ae2#819ae159ab7dcba65d33d056d528ae8f7ec32ae2"
+source = "git+https://github.com/zjarlin/dioxus-admin-workbench.git?rev=1bb367d499d119f4de88a2ed2e7b3acfcc088e6f#1bb367d499d119f4de88a2ed2e7b3acfcc088e6f"
 dependencies = [
  "anyhow",
  "convert_case",
@@ -132,7 +133,7 @@ dependencies = [
 [[package]]
 name = "az-dioxus-admin-shell"
 version = "2026.8.17"
-source = "git+https://github.com/zjarlin/dioxus-admin-workbench.git?rev=819ae159ab7dcba65d33d056d528ae8f7ec32ae2#819ae159ab7dcba65d33d056d528ae8f7ec32ae2"
+source = "git+https://github.com/zjarlin/dioxus-admin-workbench.git?rev=1bb367d499d119f4de88a2ed2e7b3acfcc088e6f#1bb367d499d119f4de88a2ed2e7b3acfcc088e6f"
 dependencies = [
  "anyhow",
  "az-admin-shell-core",
@@ -149,7 +150,7 @@ dependencies = [
 [[package]]
 name = "az-ui-components"
 version = "2026.8.17"
-source = "git+https://github.com/zjarlin/dioxus-admin-workbench.git?rev=819ae159ab7dcba65d33d056d528ae8f7ec32ae2#819ae159ab7dcba65d33d056d528ae8f7ec32ae2"
+source = "git+https://github.com/zjarlin/dioxus-admin-workbench.git?rev=1bb367d499d119f4de88a2ed2e7b3acfcc088e6f#1bb367d499d119f4de88a2ed2e7b3acfcc088e6f"
 dependencies = [
  "dioxus",
  "dioxus-icons",
