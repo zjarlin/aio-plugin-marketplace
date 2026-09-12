@@ -1,4 +1,5 @@
 mod details;
+mod family;
 mod http;
 mod model;
 mod page;

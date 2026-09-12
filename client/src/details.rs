@@ -14,6 +14,7 @@ use dioxus_icons::lucide::{
 #[component]
 pub(super) fn PluginDetails(
     entry: MarketplaceEntry,
+    entries: Vec<MarketplaceEntry>,
     busy: bool,
     refresh: u64,
     on_action: Callback<(MarketplaceEntry, String)>,
@@ -37,6 +38,17 @@ pub(super) fn PluginDetails(
         .and_then(|s| s.split('/').next())
         .unwrap_or("发布者");
     let information = retained();
+    let parent = entry
+        .parent_git
+        .as_ref()
+        .and_then(|git| entries.iter().find(|e| &e.git == git));
+    let parent_ready = entry.parent_git.is_none()
+        || parent.is_some_and(|p| p.installed && p.state == Some(PluginState::Active));
+    let children = entries
+        .iter()
+        .filter(|e| e.parent_git.as_deref() == Some(&entry.git))
+        .cloned()
+        .collect::<Vec<_>>();
     let source = information
         .as_ref()
         .and_then(|d| d.source_revision.as_deref())
@@ -51,7 +63,7 @@ pub(super) fn PluginDetails(
             p { "{entry.summary}" }
         } }
         div { class: "extension-browser__actions",
-            if !entry.installed { Button { disabled: busy, onclick: { let entry=entry.clone();move |_| on_action.call((entry.clone(),"install".into())) }, Download {} "安装" } }
+            if !entry.installed { Button { disabled: busy || !parent_ready, onclick: { let entry=entry.clone();move |_| on_action.call((entry.clone(),"install".into())) }, Download {} "安装" } }
             else { span { class: "admin-meta", "{entry.state_label()}" } }
             if entry.installed { details { class: "extension-browser__menu",
                 summary { title: "管理插件", aria_label: "管理插件", Settings {} }
@@ -64,6 +76,20 @@ pub(super) fn PluginDetails(
                     a { role: "menuitem", href: "/api/runtime/packages/{entry.rev}", download: "plugin.aio-plugin", Download {} "下载插件包" }
                 }
             } }
+        }
+        if entry.parent_git.is_some() {
+            p { class: "admin-meta", "父插件：{parent.map(|p|p.title.as_str()).unwrap_or(\"尚未发布\")}" }
+            if !parent_ready { if let Some(parent) = parent {
+                Button { disabled: busy, variant: ButtonVariant::Outline, onclick: { let parent=parent.clone(); move |_| on_action.call((parent.clone(),if parent.installed {"enable"}else{"install"}.into())) }, Download {} "安装并启用父插件" }
+            } }
+        }
+        if !children.is_empty() {
+            section { class: "extension-browser__optional", aria_label: "可选子插件",
+                h2 { "可选子插件" }
+                for child in children { div { class: "extension-browser__child-action", strong { "{child.title}" } span { "{child.state_label()}" }
+                    if !child.installed { Button { size: ButtonSize::Sm, disabled: busy || !entry.installed || entry.state != Some(PluginState::Active), onclick: { let child=child.clone(); move |_| on_action.call((child.clone(),"install".into())) }, Download {} "安装 {child.title}" } }
+                } }
+            }
         }
         nav { class: "extension-browser__tabs", role: "tablist", aria_label: "插件详情分类",
             for (id,label) in [("details","详情"),("versions","版本记录"),("permissions","权限")] { button { role: "tab", "aria-selected": tab()==id, onclick: move |_| tab.set(id.into()), "{label}" } }

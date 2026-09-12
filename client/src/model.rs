@@ -2,6 +2,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize)]
 pub(super) struct MarketplaceEntry {
+    #[serde(default)]
+    pub parent_git: Option<String>,
     pub git: String,
     pub rev: String,
     pub title: String,

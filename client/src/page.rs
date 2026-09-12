@@ -102,7 +102,7 @@ pub(super) fn MarketplacePage() -> Element {
         ExtensionBrowser { detail_open: detail_open(),
             sidebar: rsx! { PluginTree { entries: entries(), selected: selected(), search: search(), on_search: move |value| search.set(value), on_select: move |git| { selected.set(Some(git)); detail_open.set(true); } } },
             if let Some((error,message)) = status() { StatusMessage { error, message } }
-            if let Some(entry) = current { PluginDetails { key: "{entry.git}", entry, busy: busy(), refresh: refresh(), on_action: move |value| action.call(value), on_back: move |_| detail_open.set(false) } }
+            if let Some(entry) = current { PluginDetails { key: "{entry.git}", entry, entries: entries(), busy: busy(), refresh: refresh(), on_action: move |value| action.call(value), on_back: move |_| detail_open.set(false) } }
             else if !loaded() { RequestState {} }
             else { p { "暂无插件" } }
         }
