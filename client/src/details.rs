@@ -20,21 +20,23 @@ pub(super) fn PluginDetails(
     on_back: Callback<()>,
 ) -> Element {
     let mut tab = use_signal(|| "details".to_owned());
+    let mut retained = use_signal(|| None::<PluginDetailsView>);
     let details = use_resource(use_reactive!(|entry, refresh| async move {
         let _ = refresh;
         http::get::<PluginDetailsView>(&format!("/api/runtime/marketplace/{}/details", entry.rev))
             .await
     }));
+    use_effect(move || {
+        if let Some(Ok(value)) = details.read().as_ref() {
+            retained.set(Some(value.clone()));
+        }
+    });
     let base = entry.git.trim_end_matches(".git");
     let publisher = base
         .strip_prefix("https://github.com/")
         .and_then(|s| s.split('/').next())
         .unwrap_or("发布者");
-    let information = details
-        .read()
-        .as_ref()
-        .and_then(|r| r.as_ref().ok())
-        .cloned();
+    let information = retained();
     let source = information
         .as_ref()
         .and_then(|d| d.source_revision.as_deref())
