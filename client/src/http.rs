@@ -28,14 +28,26 @@ pub(super) async fn action(source: &str, action: &str) -> Result<(), String> {
     finish(response).await
 }
 
+pub(super) async fn retry(id: &str) -> Result<(), String> {
+    finish(
+        Request::post(&format!("/api/runtime/delivery/jobs/{id}/retry"))
+            .send()
+            .await
+            .map_err(|e| e.to_string())?,
+    )
+    .await
+}
+
 async fn finish(response: Response) -> Result<(), String> {
     if !response.ok() {
         return Err(error(response).await);
     }
-    dioxus::document::eval("window.dispatchEvent(new Event('aio:catalog-invalidated')); return true;")
-        .await
-        .map(|_| ())
-        .map_err(|e| e.to_string())
+    dioxus::document::eval(
+        "window.dispatchEvent(new Event('aio:catalog-invalidated')); return true;",
+    )
+    .await
+    .map(|_| ())
+    .map_err(|e| e.to_string())
 }
 
 pub(super) async fn get<T: for<'de> Deserialize<'de>>(path: &str) -> Result<T, String> {

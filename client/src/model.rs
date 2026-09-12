@@ -27,13 +27,6 @@ pub(super) struct MarketplaceCapabilities {
     pub database: bool,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize)]
-pub(super) struct LifecycleEvent {
-    pub lifecycle: String,
-    pub detail: String,
-    pub created_at: String,
-}
-
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub(super) enum PluginState {
@@ -65,4 +58,30 @@ impl MarketplaceEntry {
 
 pub(super) fn short_revision(value: &str) -> &str {
     value.get(..12).unwrap_or(value)
+}
+
+#[derive(Clone, Debug, Default, Deserialize)]
+pub(super) struct PluginDetailsView {
+    pub readme: String,
+    pub version: Option<String>,
+    pub source_revision: Option<String>,
+    pub versions: Vec<PublishedVersion>,
+    pub builds: Vec<BuildView>,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub(super) struct PublishedVersion {
+    pub revision: String,
+    pub version: String,
+    pub source_revision: Option<String>,
+    pub created_at: String,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub(super) struct BuildView {
+    pub id: i64,
+    pub source_revision: String,
+    pub state: String,
+    pub error: Option<String>,
+    pub updated_at: String,
 }

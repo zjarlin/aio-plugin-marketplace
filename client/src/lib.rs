@@ -1,7 +1,8 @@
-mod dialogs;
+mod details;
 mod http;
 mod model;
 mod page;
+mod tree;
 
 use az_dioxus_admin_shell::{ApplicationPage, ApplicationPlugin, ApplicationScene};
 use dill::CatalogBuilder;

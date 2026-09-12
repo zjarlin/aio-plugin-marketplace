@@ -1,0 +1,80 @@
+use super::{
+    http,
+    model::{MarketplaceEntry, PluginDetailsView, PluginState, short_revision},
+};
+use az_ui_components::{
+    button::{Button, ButtonSize, ButtonVariant},
+    markdown::Markdown,
+};
+use dioxus::prelude::*;
+use dioxus_icons::lucide::{
+    ArrowLeft, Download, Package, Pause, Play, RotateCcw, Settings, Trash2,
+};
+
+#[component]
+pub(super) fn PluginDetails(
+    entry: MarketplaceEntry,
+    busy: bool,
+    refresh: u64,
+    on_action: Callback<(MarketplaceEntry, String)>,
+    on_back: Callback<()>,
+) -> Element {
+    let mut tab = use_signal(|| "details".to_owned());
+    let details = use_resource(use_reactive!(|entry, refresh| async move {
+        let _ = refresh;
+        http::get::<PluginDetailsView>(&format!("/api/runtime/marketplace/{}/details", entry.rev))
+            .await
+    }));
+    let base = entry.git.trim_end_matches(".git");
+    let publisher = base
+        .strip_prefix("https://github.com/")
+        .and_then(|s| s.split('/').next())
+        .unwrap_or("发布者");
+    let information = details
+        .read()
+        .as_ref()
+        .and_then(|r| r.as_ref().ok())
+        .cloned();
+    let source = information
+        .as_ref()
+        .and_then(|d| d.source_revision.as_deref())
+        .unwrap_or(&entry.rev);
+    let link_base = format!("{base}/blob/{source}/");
+    let image_base = format!("/api/runtime/marketplace/{}/images/", entry.rev);
+    rsx! {
+        Button { class: "extension-browser__back", variant: ButtonVariant::Ghost, onclick: move |_| on_back.call(()), ArrowLeft {} "插件列表" }
+        header { class: "extension-browser__heading", Package {} div {
+            h1 { "{entry.title}" }
+            p { "{publisher} · {information.as_ref().and_then(|d|d.version.as_deref()).unwrap_or_else(||short_revision(&entry.rev))} · {entry.license}" }
+            p { "{entry.summary}" }
+        } }
+        div { class: "extension-browser__actions",
+            if !entry.installed { Button { disabled: busy, onclick: { let entry=entry.clone();move |_| on_action.call((entry.clone(),"install".into())) }, Download {} "安装" } }
+            else { span { class: "admin-meta", "{entry.state_label()}" } }
+            if entry.installed { details { class: "extension-browser__menu",
+                summary { title: "管理插件", aria_label: "管理插件", Settings {} }
+                div { role: "menu", aria_label: "插件操作",
+                    for (action,label) in if entry.state==Some(PluginState::Active) { vec![("disable","停用"),("rollback","回滚"),("uninstall","卸载")] } else { vec![("enable","启用"),("rollback","回滚"),("uninstall","卸载")] } {
+                        button { role: "menuitem", disabled: busy, onclick: { let entry=entry.clone();move |_| on_action.call((entry.clone(),action.into())) },
+                            match action { "disable"=>rsx!{Pause{}},"enable"=>rsx!{Play{}},"rollback"=>rsx!{RotateCcw{}},_=>rsx!{Trash2{}} } "{label}"
+                        }
+                    }
+                    a { role: "menuitem", href: "/api/runtime/packages/{entry.rev}", download: "plugin.aio-plugin", Download {} "下载插件包" }
+                }
+            } }
+        }
+        nav { class: "extension-browser__tabs", role: "tablist", aria_label: "插件详情分类",
+            for (id,label) in [("details","详情"),("versions","版本记录"),("permissions","权限")] { button { role: "tab", "aria-selected": tab()==id, onclick: move |_| tab.set(id.into()), "{label}" } }
+        }
+        div { role: "tabpanel",
+            match tab().as_str() {
+                "permissions" => rsx! { dl { class: "admin-details", dt { "运行目标" } dd { "{entry.runtime.as_deref().unwrap_or(\"未声明\")}" } dt { "网络" } dd { "{entry.capabilities.network.join(\", \")}" } dt { "文件系统" } dd { "{entry.capabilities.filesystem.join(\", \")}" } dt { "数据库" } dd { if entry.capabilities.database { "已申请" } else { "未申请" } } } },
+                "versions" => rsx! { ul { class: "extension-browser__versions", if let Some(info)=information.as_ref() {
+                    for build in &info.builds { li { strong { "{build.state} · {short_revision(&build.source_revision)}" } p { "{build.updated_at}" } if let Some(error)=&build.error { pre { "{error}" } if build.state=="failed" { Button { size: ButtonSize::Sm, variant: ButtonVariant::Outline, disabled: busy, onclick: { let entry=entry.clone();let id=build.id;move |_| on_action.call((entry.clone(),format!("retry:{id}"))) }, RotateCcw {} "重试构建" } } } } }
+                    for version in &info.versions { li { strong { "{version.version}" } p { "{version.created_at}" } code { "{version.source_revision.as_deref().unwrap_or(&version.revision)}" } } }
+                } } },
+                _ => rsx! { if let Some(info)=information.as_ref() { if info.readme.is_empty() { p { "{entry.summary}" } p { class: "admin-meta", "此版本未提供 README。" } } else { Markdown { source: info.readme.clone(), link_base, image_base } } } else if let Some(Err(error))=details.read().as_ref() { p { role: "alert", "{error}" } } else { p { role: "status", "正在读取 README" } } },
+            }
+        }
+    }
+}
