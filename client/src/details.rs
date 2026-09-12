@@ -78,7 +78,7 @@ pub(super) fn PluginDetails(
             } }
         }
         if entry.parent_git.is_some() {
-            p { class: "admin-meta", "父插件：{parent.map(|p|p.title.as_str()).unwrap_or(\"尚未发布\")}" }
+            p { class: "admin-meta", "父插件：{parent.map(|p|p.title.as_str()).or(entry.parent_title.as_deref()).unwrap_or(\"尚未发布\")}" }
             if !parent_ready { if let Some(parent) = parent {
                 Button { disabled: busy, variant: ButtonVariant::Outline, onclick: { let parent=parent.clone(); move |_| on_action.call((parent.clone(),if parent.installed {"enable"}else{"install"}.into())) }, Download {} "安装并启用父插件" }
             } }

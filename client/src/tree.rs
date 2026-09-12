@@ -44,18 +44,7 @@ fn Branch(
 ) -> Element {
     let mut open = use_signal(|| true);
     let has_children = !node.children.is_empty();
-    let title = node
-        .entry
-        .as_ref()
-        .map(|e| e.title.clone())
-        .unwrap_or_else(|| {
-            node.git
-                .trim_end_matches(".git")
-                .rsplit('/')
-                .next()
-                .unwrap_or("父插件")
-                .into()
-        });
+    let title = node.title;
     rsx! {
         div {class:"extension-browser__branch",
             div {class:"extension-browser__row",

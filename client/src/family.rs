@@ -4,6 +4,7 @@ use std::collections::{BTreeMap, BTreeSet};
 #[derive(Clone, Debug, PartialEq)]
 pub(super) struct Node {
     pub git: String,
+    pub title: String,
     pub entry: Option<MarketplaceEntry>,
     pub children: Vec<Node>,
 }
@@ -12,9 +13,15 @@ pub(super) fn forest(entries: &[MarketplaceEntry], installed: bool, query: &str)
     let by_git: BTreeMap<_, _> = entries.iter().map(|e| (e.git.clone(), e)).collect();
     let query = query.to_lowercase();
     let matches = |e: &MarketplaceEntry| {
-        format!("{} {} {}", e.title, e.summary, e.tags.join(" "))
-            .to_lowercase()
-            .contains(&query)
+        format!(
+            "{} {} {} {}",
+            e.title,
+            e.summary,
+            e.tags.join(" "),
+            e.parent_title.as_deref().unwrap_or_default()
+        )
+        .to_lowercase()
+        .contains(&query)
     };
     let mut retained = BTreeSet::new();
     for entry in entries.iter().filter(|e| e.installed == installed) {
@@ -66,6 +73,17 @@ pub(super) fn forest(entries: &[MarketplaceEntry], installed: bool, query: &str)
             .filter_map(|child| build(child.clone(), by_git, children, seen))
             .collect();
         Some(Node {
+            title: by_git
+                .get(&git)
+                .map(|e| e.title.clone())
+                .or_else(|| {
+                    by_git.values().find_map(|e| {
+                        (e.parent_git.as_ref() == Some(&git))
+                            .then(|| e.parent_title.clone())
+                            .flatten()
+                    })
+                })
+                .unwrap_or_else(|| "父插件".into()),
             entry: by_git.get(&git).map(|e| (*e).clone()),
             git,
             children: descendants,
@@ -110,8 +128,21 @@ mod tests {
         let entries = vec![entry("child", Some("parent"), false)];
         let nodes = forest(&entries, false, "");
         assert!(nodes[0].entry.is_none());
+        assert_eq!(nodes[0].title, "父插件");
         assert_eq!(nodes[0].children.len(), 1);
         let cycle = vec![entry("A", Some("B"), false), entry("B", Some("A"), false)];
         assert_eq!(forest(&cycle, false, "").len(), 1);
+    }
+
+    #[test]
+    fn parent_title_is_searchable_until_the_parent_is_published() {
+        let mut child = entry("child", Some("parent"), false);
+        child.title = "记忆".into();
+        child.parent_title = Some("智能体".into());
+        let nodes = forest(&[child.clone()], false, "智能体");
+        assert_eq!(nodes[0].title, "智能体");
+        let mut parent = entry("parent", None, false);
+        parent.title = "正式父插件".into();
+        assert_eq!(forest(&[parent, child], false, "")[0].title, "正式父插件");
     }
 }
